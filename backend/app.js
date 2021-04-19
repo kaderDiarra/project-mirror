@@ -1,17 +1,32 @@
 const express = require('express')
+const mongoose = require('mongoose')
 require('dotenv').config()
 
-const app = express()
-const hello = require('./routes/hello')
-
-// app.get('/', (req, res) => {
-//     res.send('Hello Kader 31')
-// })
-
-app.use('/', hello)
-
 const PORT = process.env.PORT || 5000
+const app = express()
+const apiTestRouter = require('./routes/api-test')
+const clientRouter = require('./routes/client')
 
-app.listen(PORT, () => {
-    console.log(`Listening on Port: ${PORT}`)
-})
+async function dbConnection() {
+    const mongoConnectOpt = {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    }
+    await mongoose.connect(process.env.MONGO_DB_URL, mongoConnectOpt)
+}
+
+// connect to mongodb
+dbConnection()
+    .then(() => {
+        console.log('connected to db')
+        app.listen(PORT, () => {
+            console.log(`Listening on Port: ${PORT}`)
+        })
+    })
+    .catch(err => console.log(err))
+
+// json api
+app.use(express.json())
+
+app.use('/', apiTestRouter)
+app.use('/client', clientRouter)

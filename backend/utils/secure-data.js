@@ -2,12 +2,12 @@ require('dotenv').config()
 const crypto = require('crypto')
 
 const algorithm = 'aes-256-cbc'
-const iv = crypto.randomBytes(16)
+const iv = crypto.randomBytes(16).toString('hex').slice(0, 16)
 const ROUNDS = +process.env.KEY_ROUNDS
 const KEY_SIZE = +process.env.KEY_SIZE
 const SECRET = process.env.SECRET_KEY_CRYPTO
 
-async function encrypt(text) {
+function encrypt(text) {
     const salt = crypto.createHash('sha1').update(SECRET).digest("hex")
     const key = crypto.pbkdf2Sync(SECRET, salt, ROUNDS, KEY_SIZE, 'sha512');
 
@@ -21,7 +21,7 @@ async function encrypt(text) {
     }
 }
 
-async function decrypt(hash) {
+function decrypt(hash) {
     const salt = crypto.createHash('sha1').update(SECRET).digest("hex")
     const key = crypto.pbkdf2Sync(SECRET, salt, ROUNDS, KEY_SIZE, 'sha512');
     const { iv, content } = hash
@@ -31,18 +31,6 @@ async function decrypt(hash) {
 
     return decrypted.toString()
 }
-
-/*async function test() {
-    const text = "toto et titi"
-    const res = await encrypt(text)
-    console.log("encrypted: ", res)
-    const response = await decrypt(res)
-    return response
-}
-
-test()
-    .then(res => console.log(res))
-    .catch(err => console.log(err))*/
 
 module.exports = {
     encrypt,

@@ -6,8 +6,14 @@ const clientSchema = new Schema({
     lastName: {type: String, required: true},
     email: {type: String, required: true},
     enable: {type: Boolean, default: false},
-    apiKey: {type: String, required: true},
-    secretKey: {type: String, required: true}
+    apiKey: {
+        iv: { type: String, required: true },
+        content: { type: String, required: true }
+    },
+    secretKey: {
+        iv: { type: String, required: true },
+        content: { type: String, required: true }
+    }
 }, { timestamps: true })
 
 const Client = mongoose.model('Client', clientSchema)

@@ -6,19 +6,6 @@ const createSignature = require('../utils/create-signature')
 // https://attacomsian.com/blog/nodejs-encrypt-decrypt-data
 // https://gist.github.com/vlucas/2bd40f62d20c1d49237a109d491974eb
 
-const axiosError = (error) => {
-    if (error.response) {
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
-    } else if (error.request) {
-      console.log(error.request);
-    } else {
-      console.log('Error', error.message);
-    }
-    console.log(error.config);
-}
-
 const apiTest = (req, res) => {
     const list = ["item1", "item2", "item3"];
 
@@ -41,7 +28,7 @@ const apiTest = (req, res) => {
         timestamp: Date.now(),
         //signature: signature
     }
-    orderInfo.signature = createSignature(orderInfo)
+    orderInfo.signature = createSignature(process.env.SECRET_KEY_TESTNET, orderInfo)
     console.log("query: ", qs.stringify(orderInfo))
     /*axiosInstance.get('exchangeInfo')
         .then(response => {

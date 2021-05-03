@@ -1,20 +1,67 @@
-const { body, validationResult } = require('express-validator')
+const { body, param, validationResult } = require('express-validator')
+const ObjectId = require('mongoose').Types.ObjectId
 const { isValidApiKey, isValidSecretKey } = require('../utils/validate-keys')
 
 const isAlphaWithSpace = value => value.match(/^[A-Za-zÀ-ÖØ-öø-ÿ ]+$/)
+const isAlphaNumWithSpace = value => value.match(/^$|^[0-9A-Za-zÀ-ÖØ-öø-ÿ ]+$/)
+
+const isValidObjectId = (id) => {
+    if (ObjectId.isValid(id)) {
+        if ((String)(new ObjectId(id)) === id)
+            return true
+        return false;
+    }
+    return false;
+}
 
 const userValidationRules = () => {
     return [
         body('firstName', 'Invalid first name').notEmpty().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
         body('lastName', 'Invalid last name').notEmpty().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
         body('email', 'Invalid email').notEmpty().isEmail(),
+        body('description', 'Invalid description').exists().isString().custom(isAlphaNumWithSpace).isLength({ max: 256 }),
+        body('image', 'Invalid image').exists().isString(),
         body('apiKey', 'Invalid api key').notEmpty().isString().isLength({ min: 64, max: 64 }).custom(isValidApiKey),
         body('secretKey', 'Invalid secret key').notEmpty().isString().isLength({ min: 64, max: 64 }).custom(isValidSecretKey),
     ]
 }
 
+const userDeletionRules = () => {
+    return (
+        param('id', 'Invalid id').notEmpty().isString().isAlphanumeric().custom(isValidObjectId)
+    )
+}
+
+const userUpdateRules = () => {
+    return [
+        param('_id', 'Invalid id').notEmpty().isString().isAlphanumeric().custom(isValidObjectId),
+        body('firstName', 'Invalid first name').optional().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
+        body('lastName', 'Invalid last name').optional().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
+        body('email', 'Invalid email').optional().isEmail(),
+        body('description', 'Invalid description').optional().isString().custom(isAlphaNumWithSpace).isLength({ max: 256 }),
+        body('image', 'Invalid image').optional().isString(),
+        body('apiKey', 'Invalid api key').optional().isString().isLength({ min: 64, max: 64 }).custom(isValidApiKey),
+        body('secretKey', 'Invalid secret key').optional().isString().isLength({ min: 64, max: 64 }).custom(isValidSecretKey),
+    ]
+}
+
+const containsValue = (value, container) => container?.includes(value)
+
+const tradingRules = () => {
+    return [
+        body('clientsId', 'Invalid clients id').notEmpty().isArray(),
+        body('clientsId.*', 'Invalid clients id').isString().isAlphanumeric().custom(isValidObjectId),
+        body("symbol", "Invalid symbol").notEmpty().isString().isAlpha().custom(value => containsValue(value, ['BTCUSDT'])),
+        body("side", "Invalid side").notEmpty().isString().isAlpha().custom(value => containsValue(value, ['SELL', 'BUY'])),
+        body("type", "Invalid type").notEmpty().isString().custom(value => containsValue(value, ['LIMIT'])),
+        body("timeInForce", "Invalid timeInForce").notEmpty().isString().custom(value => containsValue(value, ['GTC'])),
+        body("quantity", "Invalid quantity").notEmpty().isNumeric(),
+        body("price", "Invalid price").notEmpty().isNumeric(),
+    ]
+}
+
 const validate = (req, res, next) => {
-    const errors = validationResult(req)
+    const errors = validationResult(req, { strictParams: ['body'] })
 
     if (errors.isEmpty())
         return next();
@@ -29,5 +76,8 @@ const validate = (req, res, next) => {
 
 module.exports = {
     userValidationRules,
+    userDeletionRules,
+    userUpdateRules,
+    tradingRules,
     validate,
 }

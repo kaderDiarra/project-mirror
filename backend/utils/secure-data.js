@@ -2,12 +2,12 @@ require('dotenv').config()
 const crypto = require('crypto')
 
 const algorithm = 'aes-256-cbc'
-const iv = crypto.randomBytes(16).toString('hex').slice(0, 16)
 const ROUNDS = +process.env.KEY_ROUNDS
 const KEY_SIZE = +process.env.KEY_SIZE
 const SECRET = process.env.SECRET_KEY_CRYPTO
 
 function encrypt(text) {
+    const iv = crypto.randomBytes(16).toString('hex').slice(0, 16)
     const salt = crypto.createHash('sha1').update(SECRET).digest("hex")
     const key = crypto.pbkdf2Sync(SECRET, salt, ROUNDS, KEY_SIZE, 'sha512');
 

@@ -10,19 +10,18 @@ async function isValidApiKey(apiKey) {
     const symbol = "BTCBUSD"
     const limit = 0
 
-    axiosInstance.get('historicalTrades', {
-        params: {
-            symbol,
-            limit,
-        }
-    })
-        .then(response => {
-            return Promise.resolve()
+    try {
+        await axiosInstance.get('historicalTrades', {
+            params: {
+                symbol,
+                limit,
+            }
         })
-        .catch(error => {
-            axiosError(error)
-            return Promise.reject()
-    })
+        return Promise.resolve()
+    } catch (error) {
+        axiosError(error)
+        return Promise.reject()
+    }
 }
 
 async function isValidSecretKey(secretKey, { req }) {
@@ -32,19 +31,18 @@ async function isValidSecretKey(secretKey, { req }) {
     const timestamp = Date.now()
     const signature = createSignature(secretKey, { timestamp })
 
-    axiosInstance.get('account', {
-        params: {
-            timestamp,
-            signature,
-        }
-    })
-        .then(response => {
-            return Promise.resolve()
+    try {
+        await axiosInstance.get('account', {
+            params: {
+                timestamp,
+                signature,
+            }
         })
-        .catch(error => {
-            axiosError(error)
-            return Promise.reject()
-    })
+        return Promise.resolve()
+    } catch (error) {
+        axiosError(error)
+        return Promise.reject()
+    }
 }
 
 // VERIFY API KEY AND SECRET KEY

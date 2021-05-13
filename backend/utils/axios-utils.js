@@ -14,7 +14,7 @@ function axiosError(error) {
     console.log(error.config);
 }
 
-function createAxiosInstance(apiKey, timeout = 7000) {
+function createAxiosInstance(apiKey = null, timeout = 5000) {
     const axiosInstance = axios.create({
         baseURL: process.env.BINANCE_API_URL,
         timeout,

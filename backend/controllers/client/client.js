@@ -14,6 +14,7 @@ const projection = {
 exports.getAllClients = async(req, res) => {
     try {
         const clients = await Client.find({}, {...projection})
+        console.log(clients)
         res.status(200).send(clients)
     } catch (error) {
         console.log(error)
@@ -23,7 +24,7 @@ exports.getAllClients = async(req, res) => {
 
 exports.createClient = async(req, res) => {
     const body = matchedData(req, { locations: ['body'] })
-    const { firstName, lastName, email, apiKey, secretKey, image, description } = body
+    const { firstName, lastName, email, apiKey, secretKey, picture, description } = body
 
     try {
         const cryptedApiKey = encrypt(apiKey)
@@ -34,7 +35,7 @@ exports.createClient = async(req, res) => {
             lastName,
             email,
             description,
-            image,
+            picture,
             apiKey: {
                 iv: cryptedApiKey?.iv,
                 content: cryptedApiKey?.content
@@ -45,6 +46,7 @@ exports.createClient = async(req, res) => {
             }
         })
         const result = await client.save()
+        console.log('user created')
         res.status(201).send(result)
     } catch (error) {
         console.log(error)
@@ -73,8 +75,7 @@ exports.updateUser = async(req, res) => {
         const body = matchedData(req, { locations: ['body'] })
         const params = matchedData(req, { locations: ['params'] })
         const _id = params._id
-        console.log("id: ", _id)
-        const { firstName, lastName, email, image, description } = body
+        const { firstName, lastName, email, picture, description } = body
         let { apiKey, secretKey } = body
 
         if (!_id || !body)
@@ -85,15 +86,38 @@ exports.updateUser = async(req, res) => {
             secretKey = encrypt(secretKey)
 
         const updateData = {
-            firstName, lastName, email, apiKey, secretKey, image, description,
+            firstName, lastName, email, apiKey, secretKey, picture, description,
         }
         const option = {
             omitUndefined: true,
             new: true,
+            projection: {...projection},
         }
 
         const result = await Client.findByIdAndUpdate(_id, updateData, option)
+        console.log(result)
         res.status(200).send(result)
+    } catch (error) {
+        console.log(error)
+        res.status(500).end()
+    }
+}
+
+
+exports.searchClients = async(req, res) => {
+    const query = matchedData(req, { locations: ['query'] })
+    let toSearch = query.toSearch?.split(' ')
+    toSearch = toSearch?.join('|') ?? ''
+
+    console.log('search: ', query)
+    try {
+        const clients = await Client.find({
+            $or: [
+                {firstName: { $regex: toSearch, $options: 'gi' } }, //new RegExp(toSearch, 'gi'
+                {lastName: { $regex: toSearch, $options: 'gi' }}
+            ]
+        }, {...projection})
+        res.status(200).send(clients)
     } catch (error) {
         console.log(error)
         res.status(500).end()

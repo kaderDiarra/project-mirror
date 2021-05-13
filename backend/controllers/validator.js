@@ -1,4 +1,4 @@
-const { body, param, validationResult } = require('express-validator')
+const { body, param, query, validationResult } = require('express-validator')
 const ObjectId = require('mongoose').Types.ObjectId
 const { isValidApiKey, isValidSecretKey } = require('../utils/validate-keys')
 
@@ -14,50 +14,75 @@ const isValidObjectId = (id) => {
     return false;
 }
 
-const userValidationRules = () => {
+const containsValue = (value, container) => container?.includes(value)
+
+const clientValidationRules = () => {
     return [
         body('firstName', 'Invalid first name').notEmpty().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
         body('lastName', 'Invalid last name').notEmpty().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
         body('email', 'Invalid email').notEmpty().isEmail(),
         body('description', 'Invalid description').exists().isString().custom(isAlphaNumWithSpace).isLength({ max: 256 }),
-        body('image', 'Invalid image').exists().isString(),
+        body('picture', 'Invalid picture').exists().isString(),
         body('apiKey', 'Invalid api key').notEmpty().isString().isLength({ min: 64, max: 64 }).custom(isValidApiKey),
         body('secretKey', 'Invalid secret key').notEmpty().isString().isLength({ min: 64, max: 64 }).custom(isValidSecretKey),
     ]
 }
 
-const userDeletionRules = () => {
+const userLoginValidationRules = () => {
+    return [
+        body('email', 'Invalid email').notEmpty().isEmail(),
+        body('password', 'Invalid password format').notEmpty().isString().isStrongPassword().isLength({ max: 16 }),
+    ]
+}
+
+const userCreationValidationRules = () => {
+    return [
+        body('firstName', 'Invalid first name').notEmpty().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
+        body('lastName', 'Invalid last name').notEmpty().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
+        body('email', 'Invalid email').notEmpty().isEmail(),
+        body('password', 'Invalid password format').notEmpty().isString().isStrongPassword().isLength({ max: 16 }),
+        body('confirmPassword', 'Invalid confirmation password').notEmpty().isString().isStrongPassword().isLength({ max: 16 }),
+    ]
+}
+
+const deletionByIdRules = () => {
     return (
         param('id', 'Invalid id').notEmpty().isString().isAlphanumeric().custom(isValidObjectId)
     )
 }
 
-const userUpdateRules = () => {
+const clientUpdateRules = () => {
     return [
         param('_id', 'Invalid id').notEmpty().isString().isAlphanumeric().custom(isValidObjectId),
         body('firstName', 'Invalid first name').optional().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
         body('lastName', 'Invalid last name').optional().isString().custom(isAlphaWithSpace).isLength({ min: 3, max: 30 }).toLowerCase(),
         body('email', 'Invalid email').optional().isEmail(),
         body('description', 'Invalid description').optional().isString().custom(isAlphaNumWithSpace).isLength({ max: 256 }),
-        body('image', 'Invalid image').optional().isString(),
+        body('picture', 'Invalid picture').optional().isString(),
         body('apiKey', 'Invalid api key').optional().isString().isLength({ min: 64, max: 64 }).custom(isValidApiKey),
         body('secretKey', 'Invalid secret key').optional().isString().isLength({ min: 64, max: 64 }).custom(isValidSecretKey),
     ]
 }
 
-const containsValue = (value, container) => container?.includes(value)
 
 const tradingRules = () => {
     return [
         body('clientsId', 'Invalid clients id').notEmpty().isArray(),
         body('clientsId.*', 'Invalid clients id').isString().isAlphanumeric().custom(isValidObjectId),
-        body("symbol", "Invalid symbol").notEmpty().isString().isAlpha().custom(value => containsValue(value, ['BTCUSDT'])),
+        body("symbol", "Invalid symbol").notEmpty().isString().isAlpha().custom(value => containsValue(value, ['BTCUSDT', 'ZECUSDT', 'HIVEUSDT'])),
         body("side", "Invalid side").notEmpty().isString().isAlpha().custom(value => containsValue(value, ['SELL', 'BUY'])),
-        body("type", "Invalid type").notEmpty().isString().custom(value => containsValue(value, ['LIMIT'])),
-        body("timeInForce", "Invalid timeInForce").notEmpty().isString().custom(value => containsValue(value, ['GTC'])),
-        body("quantity", "Invalid quantity").notEmpty().isNumeric(),
-        body("price", "Invalid price").notEmpty().isNumeric(),
+        body("type", "Invalid type").notEmpty().isString().custom(value => containsValue(value, ['LIMIT', 'MARKET'])),
+        body("quoteOrderQty", "Invalid quoteOrderQty").optional().isNumeric(),
+        //body("timeInForce", "Invalid timeInForce").optional().isString().custom(value => containsValue(value, ['GTC'])),
+        //body("quantity", "Invalid quantity").optional().isNumeric(),
+        //body("price", "Invalid price").optional().isNumeric(),
     ]
+}
+
+const searchClientRules = () => {
+    return (
+        query('toSearch', 'Invalid search value').exists().isString().isLength({ max: 60 }).toLowerCase()
+    )
 }
 
 const validate = (req, res, next) => {
@@ -75,9 +100,12 @@ const validate = (req, res, next) => {
 }
 
 module.exports = {
-    userValidationRules,
-    userDeletionRules,
-    userUpdateRules,
+    clientValidationRules,
+    deletionByIdRules,
+    clientUpdateRules,
+    searchClientRules,
+    userLoginValidationRules,
+    userCreationValidationRules,
     tradingRules,
     validate,
 }

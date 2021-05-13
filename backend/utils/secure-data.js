@@ -6,8 +6,8 @@ const ROUNDS = +process.env.KEY_ROUNDS
 const KEY_SIZE = +process.env.KEY_SIZE
 const SECRET = process.env.SECRET_KEY_CRYPTO
 
-function encrypt(text) {
-    const iv = crypto.randomBytes(16).toString('hex').slice(0, 16)
+const encrypt = (text) => {
+    const iv = crypto.randomBytes(16)
     const salt = crypto.createHash('sha1').update(SECRET).digest("hex")
     const key = crypto.pbkdf2Sync(SECRET, salt, ROUNDS, KEY_SIZE, 'sha512');
 
@@ -21,7 +21,7 @@ function encrypt(text) {
     }
 }
 
-function decrypt(hash) {
+const decrypt = (hash) => {
     const salt = crypto.createHash('sha1').update(SECRET).digest("hex")
     const key = crypto.pbkdf2Sync(SECRET, salt, ROUNDS, KEY_SIZE, 'sha512');
     const { iv, content } = hash
